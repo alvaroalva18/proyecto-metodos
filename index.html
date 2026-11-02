@@ -18,9 +18,6 @@ h1{font-size:clamp(1.35rem,3.2vw,1.9rem);line-height:1.2;margin:0 0 6px;font-wei
 .cells{display:flex;gap:4px;margin:0 0 18px}
 .cells i{flex:1;height:8px;border-radius:2px;background:var(--pr);opacity:.25}
 .cells i:nth-child(-n+9){opacity:1}
-nav{display:flex;gap:6px;border-bottom:1px solid var(--bd);margin-bottom:18px}
-nav button{background:none;border:0;color:var(--mu);font:500 15px inherit;font-family:inherit;padding:10px 14px;cursor:pointer;border-bottom:3px solid transparent}
-nav button[aria-selected="true"]{color:var(--tx);border-color:var(--pr)}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:16px;margin-bottom:16px}
 .g{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 @media(max-width:640px){.g{grid-template-columns:1fr}}
@@ -42,10 +39,6 @@ th,td{text-align:right;padding:6px 10px;border-bottom:1px solid var(--bd);white-
 th:first-child,td:first-child{text-align:left}
 .big{font-size:2rem;font-weight:600;color:var(--pr);line-height:1.1}
 .nt{color:var(--mu);font-size:.88rem}
-ol.k{padding-left:0;list-style:none;margin:0}
-ol.k li{display:grid;grid-template-columns:5.2rem 1fr;gap:10px;padding:12px 0;border-bottom:1px solid var(--bd)}
-ol.k b{color:var(--pr)}
-ol.k li:last-child{border:0}
 [hidden]{display:none!important}
 </style>
 </head>
@@ -54,12 +47,7 @@ ol.k li:last-child{border:0}
 <h1>Sistema web interactivo de métodos numéricos aplicado al análisis de curvas de carga y eficiencia energética en celdas de almacenamiento</h1>
 <p class="sub">Sube las mediciones de una celda, interpola su curva y encuentra cuándo alcanza un voltaje.</p>
 <div class="cells" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-<nav role="tablist">
-<button role="tab" id="t1" aria-selected="true">Calculadora</button>
-<button role="tab" id="t2" aria-selected="false">Proyecto (semanas 9 a 16)</button>
-</nav>
 
-<section id="p1">
 <div class="g">
 <div class="card"><h2>Curva de carga</h2><p class="h">Columnas: A tiempo, B voltaje (V). Se ignora lo demás.</p>
 <input type="file" id="fch" accept=".xlsx,.xls,.csv,.txt" aria-label="Archivo de carga">
@@ -85,20 +73,6 @@ ol.k li:last-child{border:0}
 <div id="cvw"><canvas id="cv"></canvas></div>
 <div class="ov" id="out"></div>
 </div>
-</section>
-
-<section id="p2" hidden>
-<div class="card"><ol class="k">
-<li><b>Semana 9</b><span><strong>Descripción.</strong> Problema: conocer cómo evoluciona el voltaje de una celda al cargarse y descargarse. Objetivos, variables (V, t), hipótesis y métodos elegidos. Primer avance subido el sábado.</span></li>
-<li><b>Semana 10</b><span><strong>Primer prototipo.</strong> Celda 18650 con una carga resistiva, sensor INA219 y un ESP32 o Arduino que guarda tiempo y voltaje en un CSV cada segundo. La parte digital es esta página.</span></li>
-<li><b>Semana 11</b><span><strong>Mediciones.</strong> Al menos un ciclo de carga y uno de descarga con corriente constante. Anotar temperatura y estado inicial. Cargar los datos en la calculadora y revisar que no haya saltos ni huecos.</span></li>
-<li><b>Semanas 12 y 13</b><span><strong>Aplicación de métodos.</strong> Lagrange local para estimar V(t) entre muestras. Splines cúbicos para una curva suave. Raíces (bisección y secante) para hallar el instante en que la celda llega al voltaje de corte.</span></li>
-<li><b>Semanas 14 y 15</b><span><strong>Exposición.</strong> Demostración en vivo con tus datos, comparación entre métodos y conclusiones.</span></li>
-<li><b>Semana 16</b><span><strong>Informe físico.</strong> Formato IEEE a dos columnas, sin carátula: resumen, introducción, metodología, resultados, conclusiones y referencias. Enlace a esta página de GitHub.</span></li>
-</ol></div>
-<div class="card"><h2>Fundamento resumido</h2>
-<p class="nt">Lagrange se aplica con 4 puntos vecinos para evitar oscilaciones. El spline cúbico natural es continuo con primera y segunda derivada continuas. Para las raíces se resuelve S(t) − V₀ = 0, donde S es el spline y V₀ el voltaje objetivo: primero se busca un cambio de signo y luego se refina con bisección y con secante.</p></div>
-</section>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -107,11 +81,6 @@ ol.k li:last-child{border:0}
 const $=s=>document.querySelector(s);
 const S={ch:null,di:null};let chart;
 const f4=(v,d=4)=>isFinite(v)?v.toFixed(d):"—";
-
-["t1","t2"].forEach((id,i)=>$("#"+id).onclick=()=>{
-  $("#p1").hidden=i!==0;$("#p2").hidden=i!==1;
-  $("#t1").setAttribute("aria-selected",i===0);$("#t2").setAttribute("aria-selected",i===1);
-});
 
 function load(k){
   const f=$("#f"+k).files[0];if(!f)return;
