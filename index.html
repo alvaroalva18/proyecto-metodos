@@ -4,8 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora de Metodos Numericos</title>
-    <!-- Librerias Matematicas y Graficas Estables -->
-    <script src="https://cloudflare.com"></script>
+    <!-- Librerias Graficas Estables -->
     <script src="https://jsdelivr.net"></script>
     <style>
         body { background-color: #111827; color: #f3f4f6; font-family: sans-serif; margin: 0; padding: 20px; }
@@ -34,7 +33,7 @@
         <!-- Izquierda -->
         <div class="panel">
             <h3>📂 Cargar Datos Físicos</h3>
-            <p style="font-size:13px; color:#9ca3af;">Sube tu archivo (Tiempo vs Voltaje)</p>
+            <p style="font-size:13px; color:#9ca3af;">Sube tu archivo de datos (Tiempo vs Voltaje)</p>
             <input type="file" id="excel-file" style="margin-top:10px; color:#f3f4f6;" />
             <p style="font-size:12px; margin-top:10px;">Filas procesadas: <span id="row-count" style="color:#34d399; font-weight:bold;">0</span></p>
 
@@ -73,38 +72,29 @@
                 datosY = [];
 
                 try {
-                    const data = new Uint8Array(evt.target.result);
-                    const workbook = XLSX.read(data, {type: 'array'});
-                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                    
-                    // Obtener la matriz en crudo de filas y columnas sin procesar
-                    const filasMatriz = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+                    const texto = evt.target.result;
+                    const lineas = texto.split(/\r?\n/);
 
-                    filasMatriz.forEach((fila, index) => {
-                        if (index === 0 || !fila || fila.length === 0) return; // Saltar cabecera o vacios
+                    lineas.forEach((linea, index) => {
+                        let textoLimpio = linea.trim();
+                        if (index === 0 || textoLimpio === "") return; // Saltar cabecera o lineas vacias
 
-                        let celdaA = fila[0];
-                        let celdaB = fila[1];
+                        // Separar las columnas por coma, punto y coma o tabulación
+                        const columnas = textoLimpio.split(/[,;\t]/);
+                        
+                        if (columnas.length >= 2) {
+                            const valX = parseFloat(columnas[0].trim());
+                            const valY = parseFloat(columnas[1].trim());
 
-                        // Si todo se pego en una sola columna separado por comas (Ej: "300,4.21")
-                        if (celdaA && (celdaB === undefined || celdaB === null || celdaB === "")) {
-                            const partes = String(celdaA).split(/[,;\t]/);
-                            if (partes.length >= 2) {
-                                celdaA = partes[0];
-                                celdaB = partes[1];
+                            if (!isNaN(valX) && !isNaN(valY)) {
+                                datosX.push(valX);
+                                datosY.push(valY);
                             }
                         }
-
-                        const valX = Number(celdaA);
-                        const valY = Number(celdaB);
-
-                        if (!isNaN(valX) && !isNaN(valY)) {
-                            datosX.push(valX);
-                            datosY.push(valY);
-                        }
                     });
-
-                } catch (errExcel) { console.log(errExcel); }
+                } catch (err) {
+                    console.error(err);
+                }
 
                 // VALIDACIÓN Y RENDERIZADO
                 if (datosX.length > 0) {
@@ -120,10 +110,11 @@
 
                     actualizarGrafico(datosX, datosY);
                 } else {
-                    alert("Error: Comprueba que la primera fila del Excel tenga títulos (TIEMPO y VOLTAJE) y las siguientes filas sean los números.");
+                    alert("Error al mapear las columnas. Asegúrate de que el archivo tenga datos numéricos válidos en sus filas.");
                 }
             };
-            reader.readAsArrayBuffer(file);
+            // Leer el archivo directamente como texto plano para evitar errores de librerías complejas
+            reader.readAsText(file);
         });
 
         function actualizarGrafico(x, y) {
