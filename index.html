@@ -1,165 +1,244 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora Avanzada de Métodos Numéricos</title>
-    <!-- Librerías de Código Abierto para Datos y Gráficos -->
-    <script src="https://cloudflare.com"></script>
-    <script src="https://jsdelivr.net"></script>
-    <style>
-        body { background-color: #0f172a; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 24px; }
-        header { background-color: #1e293b; padding: 20px; border-bottom: 2px solid #334155; border-radius: 12px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
-        h1 { color: #38bdf8; margin: 0; font-size: 26px; font-weight: 700; }
-        .grid-container { display: grid; grid-template-columns: 1fr; gap: 24px; }
-        @media(min-width: 768px) { .grid-container { grid-template-columns: 1fr 2fr; } }
-        .panel { background-color: #1e293b; padding: 24px; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
-        .btn { width: 100%; padding: 14px; margin-top: 12px; border: none; border-radius: 8px; font-weight: 600; color: white; transition: all 0.2s; cursor: not-allowed; opacity: 0.4; }
-        .btn-blue { background-color: #0284c7; }
-        .btn-emerald { background-color: #059669; }
-        .btn-purple { background-color: #7c3aed; }
-        .active { opacity: 1 !important; cursor: pointer !important; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-        .active:hover { filter: brightness(1.1); }
-        .console { background-color: #020617; border: 1px solid #334155; padding: 16px; border-radius: 8px; font-family: ui-monospace, monospace; color: #34d399; height: 140px; overflow-y: auto; box-shadow: inset 0 2px 4px 0 rgb(0 0 0 / 0.5); }
-        .chart-box { background-color: #0f172a; border: 1px solid #334155; padding: 12px; border-radius: 8px; height: 280px; }
-        h3 { margin-top: 0; margin-bottom: 12px; font-size: 18px; color: #e2e8f0; }
-    </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Métodos numéricos: curvas de carga y eficiencia en celdas</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#eff2ee;--card:#fff;--tx:#14201c;--mu:#566660;--bd:#d3dbd5;--pr:#0b6e55;--prt:#fff;--am:#b35a00;--soft:#e4ece6;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0e1512;--card:#161f1b;--tx:#e6eee9;--mu:#92a39b;--bd:#2a3832;--pr:#3ecf9e;--prt:#07130e;--am:#f0a04b;--soft:#1e2b25;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0e1512;--card:#161f1b;--tx:#e6eee9;--mu:#92a39b;--bd:#2a3832;--pr:#3ecf9e;--prt:#07130e;--am:#f0a04b;--soft:#1e2b25;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:400 16px/1.55 "IBM Plex Sans",system-ui,sans-serif;font-variant-numeric:tabular-nums}
+.w{max-width:980px;margin:0 auto;padding:20px 16px 48px}
+h1{font-size:clamp(1.35rem,3.2vw,1.9rem);line-height:1.2;margin:0 0 6px;font-weight:600;max-width:34ch}
+.sub{color:var(--mu);margin:0 0 14px}
+.cells{display:flex;gap:4px;margin:0 0 18px}
+.cells i{flex:1;height:8px;border-radius:2px;background:var(--pr);opacity:.25}
+.cells i:nth-child(-n+9){opacity:1}
+nav{display:flex;gap:6px;border-bottom:1px solid var(--bd);margin-bottom:18px}
+nav button{background:none;border:0;color:var(--mu);font:500 15px inherit;font-family:inherit;padding:10px 14px;cursor:pointer;border-bottom:3px solid transparent}
+nav button[aria-selected="true"]{color:var(--tx);border-color:var(--pr)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:16px;margin-bottom:16px}
+.g{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:640px){.g{grid-template-columns:1fr}}
+h2{font-size:1.05rem;margin:0 0 4px;font-weight:600}
+p.h{color:var(--mu);font-size:.9rem;margin:0 0 10px}
+label{display:block;font-size:.85rem;color:var(--mu);margin:8px 0 3px}
+input,select{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:7px 9px;max-width:100%}
+input[type=file]{width:100%}
+.r{display:flex;gap:10px;flex-wrap:wrap}
+.st{font-size:.85rem;color:var(--mu);margin-top:6px}
+.bt{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 0}
+.bt button,.ghost{font:500 15px inherit;font-family:inherit;border-radius:8px;padding:10px 14px;cursor:pointer;border:1px solid var(--pr);background:var(--pr);color:var(--prt)}
+.ghost{background:none;color:var(--pr)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--am);outline-offset:2px}
+#cvw{position:relative;height:340px}
+.ov{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.92rem;margin:8px 0}
+th,td{text-align:right;padding:6px 10px;border-bottom:1px solid var(--bd);white-space:nowrap}
+th:first-child,td:first-child{text-align:left}
+.big{font-size:2rem;font-weight:600;color:var(--pr);line-height:1.1}
+.nt{color:var(--mu);font-size:.88rem}
+ol.k{padding-left:0;list-style:none;margin:0}
+ol.k li{display:grid;grid-template-columns:5.2rem 1fr;gap:10px;padding:12px 0;border-bottom:1px solid var(--bd)}
+ol.k b{color:var(--pr)}
+ol.k li:last-child{border:0}
+[hidden]{display:none!important}
+</style>
 </head>
 <body>
+<div class="w">
+<h1>Sistema web interactivo de métodos numéricos aplicado al análisis de curvas de carga y eficiencia energética en celdas de almacenamiento</h1>
+<p class="sub">Sube las mediciones de una celda, interpola su curva y encuentra cuándo alcanza un voltaje.</p>
+<div class="cells" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+<nav role="tablist">
+<button role="tab" id="t1" aria-selected="true">Calculadora</button>
+<button role="tab" id="t2" aria-selected="false">Proyecto (semanas 9 a 16)</button>
+</nav>
 
-    <header>
-        <h1>Analizador Numérico de Baterías</h1>
-        <p style="margin:6px 0 0 0; font-size:13px; color:#94a3b8; font-weight: 500;">Proyecto Métodos Numéricos | FIEE - UNMSM</p>
-    </header>
+<section id="p1">
+<div class="g">
+<div class="card"><h2>Curva de carga</h2><p class="h">Columnas: A tiempo, B voltaje (V). Se ignora lo demás.</p>
+<input type="file" id="fch" accept=".xlsx,.xls,.csv,.txt" aria-label="Archivo de carga">
+<label for="uch">Unidad de tiempo</label><select id="uch"><option value="h">horas</option><option value="min">minutos</option><option value="s">segundos</option></select>
+<div class="st" id="stch">Ningún archivo cargado</div></div>
+<div class="card"><h2>Curva de descarga</h2><p class="h">Mismo formato.</p>
+<input type="file" id="fdi" accept=".xlsx,.xls,.csv,.txt" aria-label="Archivo de descarga">
+<label for="udi">Unidad de tiempo</label><select id="udi"><option value="h">horas</option><option value="min">minutos</option><option value="s">segundos</option></select>
+<div class="st" id="stdi">Ningún archivo cargado</div></div>
+</div>
+<div class="card">
+<div class="r" style="align-items:end">
+<div><label for="sel">Curva a analizar</label><select id="sel"><option value="ch">Carga</option><option value="di">Descarga</option></select></div>
+<div><label for="tq">Instante a evaluar (h)</label><input id="tq" type="number" step="any" value="1.0" style="width:7rem"></div>
+<div><label for="v0">Voltaje objetivo (V)</label><input id="v0" type="number" step="any" value="4.0" style="width:7rem"></div>
+<button class="ghost" id="demo">Usar datos de ejemplo</button></div>
+<div class="bt" style="margin-top:12px">
+<button data-m="lag">Interpolación de Lagrange</button>
+<button data-m="spl">Splines cúbicos</button>
+<button data-m="root">Raíces</button></div></div>
+<div class="card" id="res" hidden>
+<h2 id="rt"></h2>
+<div id="cvw"><canvas id="cv"></canvas></div>
+<div class="ov" id="out"></div>
+</div>
+</section>
 
-    <div class="grid-container">
-        <!-- Panel Izquierdo -->
-        <div class="panel">
-            <h3>📂 Módulo de Telemetría</h3>
-            <p style="font-size:13px; color:#94a3b8; margin-bottom:14px;">Cargue el archivo binario o de texto continuo (.xlsx, .xls, .csv)</p>
-            <input type="file" id="excel-file" style="margin-top:4px; color:#f8fafc; font-size:14px;" />
-            <p style="font-size:13px; margin-top:14px; font-weight: 500;">Filas de datos procesadas: <span id="row-count" style="color:#38bdf8; font-weight:700;">0</span></p>
+<section id="p2" hidden>
+<div class="card"><ol class="k">
+<li><b>Semana 9</b><span><strong>Descripción.</strong> Problema: conocer cómo evoluciona el voltaje de una celda al cargarse y descargarse. Objetivos, variables (V, t), hipótesis y métodos elegidos. Primer avance subido el sábado.</span></li>
+<li><b>Semana 10</b><span><strong>Primer prototipo.</strong> Celda 18650 con una carga resistiva, sensor INA219 y un ESP32 o Arduino que guarda tiempo y voltaje en un CSV cada segundo. La parte digital es esta página.</span></li>
+<li><b>Semana 11</b><span><strong>Mediciones.</strong> Al menos un ciclo de carga y uno de descarga con corriente constante. Anotar temperatura y estado inicial. Cargar los datos en la calculadora y revisar que no haya saltos ni huecos.</span></li>
+<li><b>Semanas 12 y 13</b><span><strong>Aplicación de métodos.</strong> Lagrange local para estimar V(t) entre muestras. Splines cúbicos para una curva suave. Raíces (bisección y secante) para hallar el instante en que la celda llega al voltaje de corte.</span></li>
+<li><b>Semanas 14 y 15</b><span><strong>Exposición.</strong> Demostración en vivo con tus datos, comparación entre métodos y conclusiones.</span></li>
+<li><b>Semana 16</b><span><strong>Informe físico.</strong> Formato IEEE a dos columnas, sin carátula: resumen, introducción, metodología, resultados, conclusiones y referencias. Enlace a esta página de GitHub.</span></li>
+</ol></div>
+<div class="card"><h2>Fundamento resumido</h2>
+<p class="nt">Lagrange se aplica con 4 puntos vecinos para evitar oscilaciones. El spline cúbico natural es continuo con primera y segunda derivada continuas. Para las raíces se resuelve S(t) − V₀ = 0, donde S es el spline y V₀ el voltaje objetivo: primero se busca un cambio de signo y luego se refina con bisección y con secante.</p></div>
+</section>
+</div>
 
-            <h3 style="margin-top:32px;">🧮 Motor de Algoritmos</h3>
-            <button id="btn-interpolacion" class="btn btn-blue" disabled>Interpolación (Lagrange)</button>
-            <button id="btn-derivacion" class="btn btn-emerald" disabled>Derivación (Dif. Centradas)</button>
-            <button id="btn-integracion" class="btn btn-purple" disabled>Integración (Simpson 1/3)</button>
-        </div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+const $=s=>document.querySelector(s);
+const S={ch:null,di:null};let chart;
+const f4=(v,d=4)=>isFinite(v)?v.toFixed(d):"—";
 
-        <!-- Panel Derecho -->
-        <div class="panel">
-            <h3>📊 Perfil Continuo de la Celda (V vs t)</h3>
-            <div class="chart-box">
-                <canvas id="canvasChart"></canvas>
-            </div>
-            
-            <h3 style="margin-top:24px;">🖥️ Consola de Ejecución Estricta</h3>
-            <div id="console-output" class="console">
-                <p style="color:#64748b; margin:0;">> Kernel listo. Esperando inyección de flujo de datos...</p>
-            </div>
-        </div>
-    </div>
+["t1","t2"].forEach((id,i)=>$("#"+id).onclick=()=>{
+  $("#p1").hidden=i!==0;$("#p2").hidden=i!==1;
+  $("#t1").setAttribute("aria-selected",i===0);$("#t2").setAttribute("aria-selected",i===1);
+});
 
-    <script>
-        let datosX = [];
-        let datosY = [];
-        let miGrafico = null;
+function load(k){
+  const f=$("#f"+k).files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:"array"});
+      S[k]=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{header:1});
+      $("#st"+k).textContent=f.name+": "+S[k].length+" filas leídas";
+    }catch(err){$("#st"+k).textContent="No se pudo leer el archivo. Usa .xlsx o .csv con números.";}
+  };
+  r.readAsArrayBuffer(f);
+}
+$("#fch").onchange=()=>load("ch");$("#fdi").onchange=()=>load("di");
 
-        document.getElementById('excel-file').addEventListener('change', function(e) {
-            // CORRECCIÓN TÉCNICA: Capturar estrictamente el primer elemento del arreglo de archivos
-            const file = e.target.files[0];
-            if (!file) return;
+function prep(k){
+  if(!S[k])return null;
+  const u={s:1/3600,min:1/60,h:1}[$("#u"+k).value],n=x=>parseFloat(String(x).replace(",","."));
+  const p=[];
+  for(const r of S[k]){const t=n(r[0]),v=n(r[1]);if(isFinite(t)&&isFinite(v))p.push({t:t*u,v});}
+  p.sort((a,b)=>a.t-b.t);
+  if(p.length<4)return null;
+  const t0=p[0].t;p.forEach(q=>q.t-=t0);
+  return p;
+}
 
-            const reader = new FileReader();
-            
-            reader.onload = function(evt) {
-                datosX = [];
-                datosY = [];
-                const consola = document.getElementById('console-output');
+function spl(x,y){
+  const n=x.length,M=new Array(n).fill(0),A=new Array(n).fill(0),B=new Array(n).fill(1),C=new Array(n).fill(0),R=new Array(n).fill(0);
+  const h=i=>x[i+1]-x[i];
+  for(let i=1;i<n-1;i++){A[i]=h(i-1);B[i]=2*(h(i-1)+h(i));C[i]=h(i);R[i]=6*((y[i+1]-y[i])/h(i)-(y[i]-y[i-1])/h(i-1));}
+  for(let i=1;i<n;i++){const w=A[i]/B[i-1];B[i]-=w*C[i-1];R[i]-=w*R[i-1];}
+  M[n-1]=R[n-1]/B[n-1];
+  for(let i=n-2;i>=0;i--)M[i]=(R[i]-C[i]*M[i+1])/B[i];
+  return q=>{
+    let i=0;while(i<n-2&&x[i+1]<q)i++;
+    const hh=h(i),a=(x[i+1]-q)/hh,b=(q-x[i])/hh;
+    return a*y[i]+b*y[i+1]+((a**3-a)*M[i]+(b**3-b)*M[i+1])*hh*hh/6;
+  };
+}
+function lag(x,y,q,k=4){
+  let j=0;while(j<x.length-1&&x[j+1]<q)j++;
+  const a=Math.max(0,Math.min(x.length-k,j-Math.floor(k/2)+1));
+  let s=0;
+  for(let i=a;i<a+k;i++){let L=1;for(let m=a;m<a+k;m++)if(m!==i)L*=(q-x[m])/(x[i]-x[m]);s+=y[i]*L;}
+  return s;
+}
+function brackets(f,a,b,n=800){
+  const r=[];let x0=a,f0=f(a);
+  for(let i=1;i<=n;i++){const x1=a+(b-a)*i/n,f1=f(x1);if(f0*f1<0)r.push([x0,x1]);x0=x1;f0=f1;}
+  return r;
+}
+function bis(f,a,b,tol=1e-9){
+  const it=[];let fa=f(a);
+  for(let k=1;k<=80;k++){
+    const c=(a+b)/2,fc=f(c);it.push({k,a,b,c,fc});
+    if(Math.abs(fc)<tol||(b-a)/2<tol)break;
+    if(fa*fc<0)b=c;else{a=c;fa=fc;}
+  }
+  return it;
+}
+function sec(f,x0,x1,tol=1e-9){
+  const it=[];
+  for(let k=1;k<=60;k++){
+    const g0=f(x0),g1=f(x1);if(g1===g0)break;
+    const x2=x1-g1*(x1-x0)/(g1-g0);it.push({k,x:x2});
+    if(Math.abs(x2-x1)<tol)break;
+    x0=x1;x1=x2;
+  }
+  return it;
+}
 
-                try {
-                    const bytes = new Uint8Array(evt.target.result);
-                    const workbook = XLSX.read(bytes, {type: 'array', raw: true});
-                    const firstSheet = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheet];
-                    
-                    // Extraer matriz cruda bi-dimensional
-                    const matrizCruda = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: ""});
+function draw(sets){
+  if(chart)chart.destroy();
+  const tx=getComputedStyle(document.documentElement).getPropertyValue("--tx").trim()||"#888",gc="rgba(128,128,128,.25)";
+  const ax=t=>({title:{display:true,text:t,color:tx},ticks:{color:tx},grid:{color:gc}});
+  chart=new Chart($("#cv"),{type:"scatter",data:{datasets:sets},options:{responsive:true,maintainAspectRatio:false,animation:false,
+    plugins:{legend:{labels:{color:tx}}},scales:{x:ax("Tiempo (h)"),y:ax("Voltaje (V)")}}});
+}
+const line=(label,pts,c,dash)=>({label,data:pts,showLine:true,pointRadius:0,borderColor:c,borderWidth:2,borderDash:dash||[]});
+const dots=(label,pts,c,r=4)=>({label,data:pts,showLine:false,pointRadius:r,backgroundColor:c});
+const tb=(h,rows)=>"<table><thead><tr>"+h.map(x=>"<th>"+x+"</th>").join("")+"</tr></thead><tbody>"+rows.map(r=>"<tr>"+r.map(c=>"<td>"+c+"</td>").join("")+"</tr>").join("")+"</tbody></table>";
+function show(title,html){$("#res").hidden=false;$("#rt").textContent=title;$("#out").innerHTML=html;}
+function warn(t){show("Faltan datos","<p>"+t+"</p>");if(chart){chart.destroy();chart=null;}}
+const cv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
 
-                    matrizCruda.forEach((fila) => {
-                        if (!fila || fila.length === 0) return;
+function run(m){
+  const k=$("#sel").value,P=prep(k);
+  if(!P)return warn("Sube un archivo con al menos 4 filas numéricas para la curva elegida, o pulsa “Usar datos de ejemplo”.");
+  const t=P.map(a=>a.t),v=P.map(a=>a.v),nm=k==="ch"?"carga":"descarga",q=parseFloat($("#tq").value),V0=parseFloat($("#v0").value);
+  const ta=t[0],tb2=t[t.length-1],grid=f=>Array.from({length:241},(_,i)=>{const x=ta+(tb2-ta)*i/240;return{x,y:f(x)};});
+  const sp=spl(t,v),pts=t.map((x,i)=>({x,y:v[i]}));
+  if(m==="lag"){
+    const yq=lag(t,v,q);
+    draw([dots("Mediciones",pts,cv("--am")),line("Lagrange local (4 puntos)",grid(x=>lag(t,v,x)),cv("--pr")),dots("V en el instante evaluado",[{x:q,y:yq}],"#d33",6)]);
+    show("Interpolación de Lagrange, curva de "+nm,"<div class='big'>"+f4(yq)+" V</div><p class='nt'>Voltaje estimado en t = "+f4(q,3)+" h con un polinomio de grado 3 que usa los 4 puntos más cercanos. Un solo polinomio para todos los datos oscilaría.</p>"+(q<ta||q>tb2?"<p class='nt'>El instante está fuera del rango medido ("+f4(ta,3)+" a "+f4(tb2,3)+" h): es extrapolación y no es confiable.</p>":""));
+  }
+  if(m==="spl"){
+    const yq=sp(q),yl=lag(t,v,q);
+    draw([dots("Mediciones",pts,cv("--am")),line("Spline cúbico natural",grid(sp),cv("--pr")),dots("V en el instante evaluado",[{x:q,y:yq}],"#d33",6)]);
+    show("Splines cúbicos, curva de "+nm,"<div class='big'>"+f4(yq)+" V</div><p class='nt'>Voltaje en t = "+f4(q,3)+" h.</p>"+tb(["Método","V (V)"],[["Spline cúbico",f4(yq)],["Lagrange local",f4(yl)],["Diferencia",f4(Math.abs(yq-yl),5)]]));
+  }
+  if(m==="root"){
+    const g=x=>sp(x)-V0,br=brackets(g,ta,tb2);
+    if(!br.length){
+      draw([dots("Mediciones",pts,cv("--am")),line("Spline cúbico natural",grid(sp),cv("--pr")),line("V objetivo",[{x:ta,y:V0},{x:tb2,y:V0}],"#d33",[6,4])]);
+      return show("Raíces, curva de "+nm,"<p>La curva nunca llega a "+f4(V0,3)+" V. Su voltaje va de "+f4(Math.min(...v),3)+" V a "+f4(Math.max(...v),3)+" V. Cambia el voltaje objetivo.</p>");
+    }
+    const res=br.slice(0,5).map(([a,b])=>{const B=bis(g,a,b),Sx=sec(g,a,b);return{B,Sx,rb:B[B.length-1].c,rs:Sx.length?Sx[Sx.length-1].x:NaN};});
+    draw([dots("Mediciones",pts,cv("--am")),line("Spline cúbico natural",grid(sp),cv("--pr")),line("V objetivo",[{x:ta,y:V0},{x:tb2,y:V0}],"#d33",[6,4]),dots("Raíces",res.map(r=>({x:r.rb,y:V0})),"#d33",6)]);
+    const f1=res[0].B.slice(0,10).map(r=>[r.k,f4(r.a,5),f4(r.b,5),f4(r.c,6),r.fc.toExponential(2)]);
+    show("Raíces de S(t) − "+f4(V0,2)+" = 0, curva de "+nm,
+      "<div class='big'>t = "+f4(res[0].rb,4)+" h</div><p class='nt'>Primer instante en que la curva llega a "+f4(V0,3)+" V.</p>"+
+      tb(["Raíz","Bisección (h)","Iter.","Secante (h)","Iter."],res.map((r,i)=>[i+1,f4(r.rb,6),r.B.length,f4(r.rs,6),r.Sx.length]))+
+      "<p class='nt'>Iteraciones de la bisección en la primera raíz (hasta 10):</p>"+tb(["k","a","b","c","S(c) − V₀"],f1)+
+      "<p class='nt'>La secante converge en menos iteraciones porque su orden es cercano a 1,6, frente al orden 1 de la bisección. En cambio, la bisección siempre converge si hay cambio de signo.</p>");
+  }
+}
+document.querySelectorAll("[data-m]").forEach(b=>b.onclick=()=>run(b.dataset.m));
 
-                        // Unificar columnas para procesar celdas con comas incrustadas
-                        const cadenaFila = fila.map(v => String(v).trim()).join(',');
-                        
-                        // Expresión regular para aislar componentes flotantes numéricos
-                        const coincidencias = cadenaFila.match(/[-+]?[0-9]*\.?[0-9]+/g);
-
-                        if (coincidencias && coincidencias.length >= 2) {
-                            const posX = parseFloat(coincidencias[0]);
-                            const posY = parseFloat(coincidencias[1]);
-
-                            if (!isNaN(posX) && !isNaN(posY)) {
-                                datosX.push(posX);
-                                datosY.push(posY);
-                            }
-                        }
-                    });
-
-                } catch (errorParsing) {
-                    console.error(errorParsing);
-                }
-
-                // Renderizado y despliegue de telemetría en interfaz
-                if (datosX.length > 0) {
-                    document.getElementById('row-count').innerText = datosX.length;
-                    consola.innerHTML += `<p style="margin:3px 0; color:#34d399;">> [ÉXITO] Archivo mapeado correctamente: "${file.name}"</p>`;
-                    consola.innerHTML += `<p style="margin:3px 0; color:#38bdf8;">> Matrices X e Y cargadas. Registrados ${datosX.length} vectores de tiempo-voltaje.</p>`;
-
-                    document.querySelectorAll('.btn').forEach(btn => {
-                        btn.disabled = false;
-                        btn.classList.add('active');
-                    });
-
-                    renderizarGraficaLineal(datosX, datosY);
-                } else {
-                    alert("Error: Comprueba que el archivo de Excel tenga datos numéricos válidos en sus celdas.");
-                }
-            };
-
-            reader.readAsArrayBuffer(file);
-        });
-
-        function renderizarGraficaLineal(x, y) {
-            const ctx = document.getElementById('canvasChart').getContext('2d');
-            if (miGrafico) { miGrafico.destroy(); }
-            
-            miGrafico = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: x,
-                    datasets: [{
-                        label: 'Curva de Voltaje Experimental (V)',
-                        data: y,
-                        borderColor: '#0284c7',
-                        backgroundColor: 'rgba(2, 132, 199, 0.1)',
-                        borderWidth: 2.5,
-                        pointBackgroundColor: '#ef4444',
-                        pointBorderColor: '#0f172a',
-                        pointRadius: 4,
-                        tension: 0.15
-                    }]
-                },
-                options: { 
-                    responsive: true, 
-                    maintainAspectRatio: false,
-                    scales: {
-                        x: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } },
-                        y: { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } }
-                    }
-                }
-            });
-        }
-    </script>
+$("#demo").onclick=()=>{
+  const ch=[],di=[];
+  for(let i=0;i<=44;i++){const t=i*0.05;ch.push([t,+(Math.min(4.2,3.2+1.02*(1-Math.exp(-t/0.7)))+0.004*Math.sin(i*2.1)).toFixed(4)]);}
+  for(let i=0;i<=38;i++){const t=i*0.05,u=t/1.9;di.push([t,+(4.1-0.6*u-0.55*Math.pow(u,9)+0.004*Math.sin(i*1.7)).toFixed(4)]);}
+  S.ch=ch;S.di=di;$("#uch").value="h";$("#udi").value="h";
+  $("#stch").textContent="Ejemplo sintético: 45 filas";$("#stdi").textContent="Ejemplo sintético: 39 filas";
+  run("root");
+};
+</script>
 </body>
 </html>
