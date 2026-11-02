@@ -34,8 +34,8 @@
         <!-- Izquierda -->
         <div class="panel">
             <h3>📂 Cargar Datos Físicos</h3>
-            <p style="font-size:13px; color:#9ca3af;">Sube tu archivo .xlsx de la celda (Tiempo vs Voltaje)</p>
-            <input type="file" id="excel-file" accept=".xlsx, .xls" style="margin-top:10px; color:#f3f4f6;" />
+            <p style="font-size:13px; color:#9ca3af;">Sube tu archivo de la celda (Tiempo vs Voltaje)</p>
+            <input type="file" id="excel-file" style="margin-top:10px; color:#f3f4f6;" />
             <p style="font-size:12px; margin-top:10px;">Filas procesadas: <span id="row-count" style="color:#34d399; font-weight:bold;">0</span></p>
 
             <h3 style="margin-top:30px;">🧮 Algoritmos</h3>
@@ -53,7 +53,7 @@
             
             <h3 style="margin-top:20px;">🖥️ Consola de Salida</h3>
             <div id="console-output" class="console">
-                <p style="color:#6b7280; margin:0;">> Sistema listo. Esperando archivo Excel...</p>
+                <p style="color:#6b7280; margin:0;">> Sistema listo. Esperando archivo Excel o CSV...</p>
             </div>
         </div>
     </div>
@@ -74,25 +74,31 @@
                     const workbook = XLSX.read(data, {type: 'array'});
                     const firstSheetName = workbook.SheetNames[0];
                     const worksheet = workbook.Sheets[firstSheetName];
-                    const json = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+                    
+                    // Convertir mapeando de forma directa por nombres de columna claves
+                    const datosJson = XLSX.utils.sheet_to_json(worksheet);
                     
                     datosX = []; 
                     datosY = [];
-                    
-                    // Validar si la primera fila contiene texto para saltarla
-                    const inicioFila = isNaN(Number(json[0][0])) ? 1 : 0;
 
-                    for (let i = inicioFila; i < json.length; i++) {
-                        if (json[i] && json[i][0] !== undefined && json[i][1] !== undefined) {
-                            if(json[i][0] !== "" && json[i][1] !== "") {
-                                datosX.push(Number(json[i][0]));
-                                datosY.push(Number(json[i][1]));
+                    datosJson.forEach(fila => {
+                        // Buscar propiedades sin importar si estan en mayusculas o minusculas
+                        const tiempoKey = Object.keys(fila).find(k => k.toUpperCase().trim() === 'TIEMPO');
+                        const voltajeKey = Object.keys(fila).find(k => k.toUpperCase().trim() === 'VOLTAJE');
+
+                        if (tiempoKey && voltajeKey) {
+                            const valX = Number(fila[tiempoKey]);
+                            const valY = Number(fila[voltajeKey]);
+                            
+                            if (!isNaN(valX) && !isNaN(valY)) {
+                                datosX.push(valX);
+                                datosY.push(valY);
                             }
                         }
-                    }
+                    });
 
                     if(datosX.length === 0) {
-                        alert("No se encontraron datos numéricos válidos en las columnas.");
+                        alert("No se encontraron columnas llamadas 'TIEMPO' y 'VOLTAJE'. Verifica tu primera fila.");
                         return;
                     }
 
@@ -109,7 +115,7 @@
 
                     actualizarGrafico(datosX, datosY);
                 } catch(err) {
-                    alert("Error al leer el archivo Excel. Revisa el formato de las celdas.");
+                    alert("Error interno al parsear. Asegúrate de subir un archivo .xlsx válido.");
                 }
             };
             reader.readAsArrayBuffer(file);
