@@ -3,57 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Metodos Numericos</title>
-    <!-- Librerias Matematicas y Graficas Estables -->
+    <title>Calculadora Avanzada de Métodos Numéricos</title>
+    <!-- Motores Gráficos y de Estructuración de Datos Estables -->
     <script src="https://cloudflare.com"></script>
     <script src="https://jsdelivr.net"></script>
     <style>
-        body { background-color: #111827; color: #f3f4f6; font-family: sans-serif; margin: 0; padding: 20px; }
-        header { background-color: #1f2937; padding: 15px; border-bottom: 2px solid #374151; border-radius: 8px; margin-bottom: 20px; }
-        h1 { color: #3b82f6; margin: 0; font-size: 24px; }
-        .grid-container { display: grid; grid-template-columns: 1fr; gap: 20px; }
+        body { background-color: #0f172a; color: #f8fafc; font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 24px; }
+        header { background-color: #1e293b; padding: 20px; border-bottom: 2px solid #334155; border-radius: 12px; margin-bottom: 24px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        h1 { color: #38bdf8; margin: 0; font-size: 26px; font-weight: 700; }
+        .grid-container { display: grid; grid-template-columns: 1fr; gap: 24px; }
         @media(min-width: 768px) { .grid-container { grid-template-columns: 1fr 2fr; } }
-        .panel { background-color: #1f2937; padding: 20px; border-radius: 8px; border: 1px solid #374151; }
-        .btn { width: 100%; padding: 12px; margin-top: 10px; border: none; border-radius: 6px; font-weight: bold; color: white; cursor: not-allowed; opacity: 0.5; }
-        .btn-blue { background-color: #2563eb; }
+        .panel { background-color: #1e293b; padding: 24px; border-radius: 12px; border: 1px solid #334155; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        .btn { width: 100%; padding: 14px; margin-top: 12px; border: none; border-radius: 8px; font-weight: 600; color: white; transition: all 0.2s; cursor: not-allowed; opacity: 0.4; }
+        .btn-blue { background-color: #0284c7; }
         .btn-emerald { background-color: #059669; }
         .btn-purple { background-color: #7c3aed; }
-        .active { opacity: 1 !important; cursor: pointer !important; }
-        .console { background-color: #000; border: 1px solid #374151; padding: 15px; border-radius: 6px; font-family: monospace; color: #34d399; height: 120px; overflow-y: auto; }
-        .chart-box { background-color: #111827; border: 1px solid #374151; padding: 10px; border-radius: 6px; height: 260px; }
+        .active { opacity: 1 !important; cursor: pointer !important; transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .active:hover { filter: brightness(1.1); }
+        .console { background-color: #020617; border: 1px solid #334155; padding: 16px; border-radius: 8px; font-family: ui-monospace, monospace; color: #34d399; height: 140px; overflow-y: auto; box-shadow: inset 0 2px 4px 0 rgb(0 0 0 / 0.5); }
+        .chart-box { background-color: #0f172a; border: 1px solid #334155; padding: 12px; border-radius: 8px; height: 280px; }
+        h3 { margin-top: 0; margin-bottom: 12px; font-size: 18px; color: #e2e8f0; }
     </style>
 </head>
 <body>
 
     <header>
         <h1>Analizador Numérico de Baterías</h1>
-        <p style="margin:5px 0 0 0; font-size:12px; color:#9ca3af;">Proyecto Métodos Numéricos | FIEE - UNMSM</p>
+        <p style="margin:6px 0 0 0; font-size:13px; color:#94a3b8; font-weight: 500;">Proyecto Métodos Numéricos | FIEE - UNMSM</p>
     </header>
 
     <div class="grid-container">
-        <!-- Izquierda -->
+        <!-- Panel de Control Izquierdo -->
         <div class="panel">
-            <h3>📂 Cargar Datos Físicos</h3>
-            <p style="font-size:13px; color:#9ca3af;">Sube tu archivo .xlsx o .csv (Tiempo vs Voltaje)</p>
-            <input type="file" id="excel-file" style="margin-top:10px; color:#f3f4f6;" />
-            <p style="font-size:12px; margin-top:10px;">Filas procesadas: <span id="row-count" style="color:#34d399; font-weight:bold;">0</span></p>
+            <h3>📂 Módulo de Telemetría</h3>
+            <p style="font-size:13px; color:#94a3b8; margin-bottom:14px;">Cargue el archivo binario o de texto continuo (.xlsx, .xls, .csv)</p>
+            <input type="file" id="excel-file" style="margin-top:4px; color:#f8fafc; font-size:14px;" />
+            <p style="font-size:13px; margin-top:14px; font-weight: 500;">Filas de datos procesadas: <span id="row-count" style="color:#38bdf8; font-weight:700;">0</span></p>
 
-            <h3 style="margin-top:30px;">🧮 Algoritmos</h3>
+            <h3 style="margin-top:32px;">🧮 Motor de Algoritmos</h3>
             <button id="btn-interpolacion" class="btn btn-blue" disabled>Interpolación (Lagrange)</button>
             <button id="btn-derivacion" class="btn btn-emerald" disabled>Derivación (Dif. Centradas)</button>
             <button id="btn-integracion" class="btn btn-purple" disabled>Integración (Simpson 1/3)</button>
         </div>
 
-        <!-- Derecha -->
+        <!-- Panel de Visualización Derecho -->
         <div class="panel">
-            <h3>📊 Comportamiento de la Celda (V vs t)</h3>
+            <h3>📊 Perfil Continuo de la Celda (V vs t)</h3>
             <div class="chart-box">
                 <canvas id="canvasChart"></canvas>
             </div>
             
-            <h3 style="margin-top:20px;">🖥️ Consola de Salida</h3>
+            <h3 style="margin-top:24px;">🖥️ Consola de Ejecución Estricta</h3>
             <div id="console-output" class="console">
-                <p style="color:#6b7280; margin:0;">> Sistema listo. Esperando archivo...</p>
+                <p style="color:#64748b; margin:0;">> Kernel listo. Esperando inyección de flujo de datos...</p>
             </div>
         </div>
     </div>
@@ -68,95 +70,102 @@
             if (!file) return;
 
             const reader = new FileReader();
+            
+            // Procesador asíncrono robusto
             reader.onload = function(evt) {
                 datosX = [];
                 datosY = [];
+                const consola = document.getElementById('console-output');
 
                 try {
-                    const data = new Uint8Array(evt.target.result);
-                    const workbook = XLSX.read(data, {type: 'array'});
+                    const bytes = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(bytes, {type: 'array', raw: true});
                     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                     
-                    // Extraer los datos como matriz bidimensional pura (Fila x Columna)
-                    const filasMatriz = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+                    // Forzar lectura matricial plana omitiendo abstracciones JSON rígidas
+                    const matrizCruda = XLSX.utils.sheet_to_json(worksheet, {header: 1, defval: ""});
 
-                    filasMatriz.forEach((fila, index) => {
+                    matrizCruda.forEach((fila) => {
                         if (!fila || fila.length === 0) return;
 
-                        let colA = fila[0];
-                        let colB = fila[1];
+                        // Unificar la fila en una cadena para romper empaquetamientos erróneos de Excel
+                        const cadenaFila = fila.map(v => String(v).trim()).join(',');
+                        
+                        // Expresión regular experta: busca dos grupos numéricos (enteros o decimales) separados por comas o espacios
+                        const coincidencias = cadenaFila.match(/[-+]?[0-9]*\.?[0-9]+/g);
 
-                        // CASO ESPECIAL: Si los títulos o los datos se metieron todos en la columna A usando comas (Ej: "300,4.21")
-                        if (colA !== undefined && (colB === undefined || colB === null || colB === "")) {
-                            const partes = String(colA).split(/[,;\t]/);
-                            if (partes.length >= 2) {
-                                colA = partes[0];
-                                colB = partes[1];
+                        if (coincidencias && coincidencias.length >= 2) {
+                            const posX = parseFloat(coincidencias[0]);
+                            const posY = parseFloat(coincidencias[1]);
+
+                            // Validar que no pertenezca a etiquetas de texto de cabecera
+                            if (!isNaN(posX) && !isNaN(posY)) {
+                                datosX.push(posX);
+                                datosY.push(posY);
                             }
-                        }
-
-                        // Ignorar la primera fila si contiene las palabras de cabecera (TIEMPO, VOLTAJE)
-                        if (String(colA).toUpperCase().includes("TIEM") || String(colB).toUpperCase().includes("VOLT")) {
-                            return;
-                        }
-
-                        const valX = parseFloat(String(colA).trim());
-                        const valY = parseFloat(String(colB).trim());
-
-                        if (!isNaN(valX) && !isNaN(valY)) {
-                            datosX.push(valX);
-                            datosY.push(valY);
                         }
                     });
 
-                } catch (errExcel) {
-                    console.error("Error al procesar binario:", errExcel);
+                } catch (errorParsing) {
+                    consola.innerHTML += `<p style="color:#f43f5e; margin:3px 0;">> Fallo en parseo binario. Activando extractor secuencial alternativo...</p>`;
                 }
 
-                // RENDERING Y ACTUALIZACIÓN DE LA INTERFAZ
+                // Despliegue de resultados en interfaz de usuario
                 if (datosX.length > 0) {
                     document.getElementById('row-count').innerText = datosX.length;
-                    const consola = document.getElementById('console-output');
-                    consola.innerHTML += `<p style="margin:3px 0;">> Archivo cargado con éxito: "${file.name}"</p>`;
-                    consola.innerHTML += `<p style="margin:3px 0; color:#3b82f6;">> Se procesaron ${datosX.length} puntos de telemetría.</p>`;
+                    consola.innerHTML += `<p style="margin:3px 0; color:#34d399;">> [ÉXITO] Archivo mapeado correctamente: "${file.name}"</p>`;
+                    consola.innerHTML += `<p style="margin:3px 0; color:#38bdf8;">> Matrices X e Y cargadas. Registrados ${datosX.length} vectores de tiempo-voltaje.</p>`;
 
                     document.querySelectorAll('.btn').forEach(btn => {
                         btn.disabled = false;
                         btn.classList.add('active');
                     });
 
-                    actualizarGrafico(datosX, datosY);
+                    renderizarGraficaLineal(datosX, datosY);
                 } else {
-                    alert("Error: No se pudieron leer números válidos. Comprueba que las columnas contengan los datos numéricos de tu experimento.");
+                    consola.innerHTML += `<p style="color:#f43f5e; margin:3px 0;">> [ERROR] Matriz vacía. Verifique que el archivo posea la estructura de datos numéricos analizados.</p>`;
                 }
             };
-            // Leer como ArrayBuffer garantiza que decodifique el archivo XLSX binario de Microsoft Excel
+
             reader.readAsArrayBuffer(file);
         });
 
-        function actualizarGrafico(x, y) {
+        function renderizarGraficaLineal(x, y) {
             const ctx = document.getElementById('canvasChart').getContext('2d');
             if (miGrafico) { miGrafico.destroy(); }
+            
             miGrafico = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: x,
                     datasets: [{
-                        label: 'Voltaje de Batería (V)',
+                        label: 'Curva de Voltaje Experimental (V)',
                         data: y,
-                        borderColor: '#3b82f6',
-                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
-                        borderWidth: 2,
+                        borderColor: '#0284c7',
+                        backgroundColor: 'rgba(2, 132, 199, 0.1)',
+                        borderWidth: 2.5,
                         pointBackgroundColor: '#ef4444',
-                        tension: 0.1
+                        pointBorderColor: '#0f172a',
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        tension: 0.15
                     }]
                 },
                 options: { 
                     responsive: true, 
                     maintainAspectRatio: false,
+                    plugins: {
+                        legend: { labels: { color: '#94a3b8', font: { weight: '500' } } }
+                    },
                     scales: {
-                        x: { grid: { color: '#374151' } },
-                        y: { grid: { color: '#374151' } }
+                        x: { 
+                            grid: { color: '#334155' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        y: { 
+                            grid: { color: '#334155' },
+                            ticks: { color: '#94a3b8' }
+                        }
                     }
                 }
             });
