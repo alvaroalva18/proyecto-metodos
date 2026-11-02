@@ -34,7 +34,7 @@
         <!-- Izquierda -->
         <div class="panel">
             <h3>📂 Cargar Datos Físicos</h3>
-            <p style="font-size:13px; color:#9ca3af;">Sube tu archivo de la celda (Tiempo vs Voltaje)</p>
+            <p style="font-size:13px; color:#9ca3af;">Sube tu archivo .xlsx o .csv (Tiempo vs Voltaje)</p>
             <input type="file" id="excel-file" style="margin-top:10px; color:#f3f4f6;" />
             <p style="font-size:12px; margin-top:10px;">Filas procesadas: <span id="row-count" style="color:#34d399; font-weight:bold;">0</span></p>
 
@@ -53,7 +53,7 @@
             
             <h3 style="margin-top:20px;">🖥️ Consola de Salida</h3>
             <div id="console-output" class="console">
-                <p style="color:#6b7280; margin:0;">> Sistema listo. Esperando archivo Excel o CSV...</p>
+                <p style="color:#6b7280; margin:0;">> Sistema listo. Esperando archivo...</p>
             </div>
         </div>
     </div>
@@ -68,42 +68,62 @@
             if (!file) return;
 
             const reader = new FileReader();
-            reader.onload = function(e) {
+            reader.onload = function(evt) {
+                datosX = [];
+                datosY = [];
+                let procesadoCorrectamente = false;
+
+                // INTENTO 1: Leer como archivo Excel (.xlsx) estructurado
                 try {
-                    const data = new Uint8Array(e.target.result);
+                    const data = new Uint8Array(evt.target.result);
                     const workbook = XLSX.read(data, {type: 'array'});
-                    const firstSheetName = workbook.SheetNames[0];
-                    const worksheet = workbook.Sheets[firstSheetName];
-                    
-                    // Convertir mapeando de forma directa por nombres de columna claves
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
                     const datosJson = XLSX.utils.sheet_to_json(worksheet);
-                    
-                    datosX = []; 
-                    datosY = [];
 
-                    datosJson.forEach(fila => {
-                        // Buscar propiedades sin importar si estan en mayusculas o minusculas
-                        const tiempoKey = Object.keys(fila).find(k => k.toUpperCase().trim() === 'TIEMPO');
-                        const voltajeKey = Object.keys(fila).find(k => k.toUpperCase().trim() === 'VOLTAJE');
+                    if (datosJson.length > 0) {
+                        datosJson.forEach(fila => {
+                            const tiempoKey = Object.keys(fila).find(k => k.toUpperCase().trim() === 'TIEMPO');
+                            const voltajeKey = Object.keys(fila).find(k => k.toUpperCase().trim() === 'VOLTAJE');
 
-                        if (tiempoKey && voltajeKey) {
-                            const valX = Number(fila[tiempoKey]);
-                            const valY = Number(fila[voltajeKey]);
-                            
-                            if (!isNaN(valX) && !isNaN(valY)) {
-                                datosX.push(valX);
-                                datosY.push(valY);
+                            if (tiempoKey && voltajeKey) {
+                                const valX = Number(fila[tiempoKey]);
+                                const valY = Number(fila[voltajeKey]);
+                                if (!isNaN(valX) && !isNaN(valY)) {
+                                    datosX.push(valX);
+                                    datosY.push(valY);
+                                }
                             }
-                        }
-                    });
-
-                    if(datosX.length === 0) {
-                        alert("No se encontraron columnas llamadas 'TIEMPO' y 'VOLTAJE'. Verifica tu primera fila.");
-                        return;
+                        });
+                        if (datosX.length > 0) procesadoCorrectamente = true;
                     }
+                } catch (e) { /* Error silencioso, pasa al intento 2 */ }
 
+                // INTENTO 2: Si fallo el parser de Excel, procesar como texto plano (CSV puro)
+                if (!procesadoCorrectamente) {
+                    try {
+                        const decoder = new TextDecoder();
+                        const texto = decoder.decode(evt.target.result);
+                        const lineas = texto.split(/\r?\n/);
+
+                        lineas.forEach((linea, index) => {
+                            if (index === 0 || linea.trim() === "") return; // Saltar cabecera o vacios
+                            const columnas = linea.split(/[,;\t]/); // Detectar comas, punto y coma o tabs
+                            if (columnas.length >= 2) {
+                                const valX = Number(columnas[0].trim());
+                                const valY = Number(columnas[1].trim());
+                                if (!isNaN(valX) && !isNaN(valY)) {
+                                    datosX.push(valX);
+                                    datosY.push(valY);
+                                }
+                            }
+                        });
+                        if (datosX.length > 0) procesadoCorrectamente = true;
+                    } catch (errText) { /* Error de decodificacion */ }
+                }
+
+                // VALIDACIÓN FINAL DE LA CARGA
+                if (procesadoCorrectamente && datosX.length > 0) {
                     document.getElementById('row-count').innerText = datosX.length;
-                    
                     const consola = document.getElementById('console-output');
                     consola.innerHTML += `<p style="margin:3px 0;">> Archivo cargado con éxito: "${file.name}"</p>`;
                     consola.innerHTML += `<p style="margin:3px 0; color:#3b82f6;">> Se procesaron ${datosX.length} puntos de telemetría.</p>`;
@@ -114,8 +134,8 @@
                     });
 
                     actualizarGrafico(datosX, datosY);
-                } catch(err) {
-                    alert("Error interno al parsear. Asegúrate de subir un archivo .xlsx válido.");
+                } else {
+                    alert("Error: No se lograron mapear las columnas. Asegúrate de que las cabeceras se llamen exactamente 'TIEMPO' y 'VOLTAJE'.");
                 }
             };
             reader.readAsArrayBuffer(file);
