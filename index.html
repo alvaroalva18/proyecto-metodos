@@ -11,7 +11,7 @@
         body { background-color: #111827; color: #f3f4f6; font-family: sans-serif; margin: 0; padding: 20px; }
         header { background-color: #1f2937; padding: 15px; border-bottom: 2px solid #374151; border-radius: 8px; margin-bottom: 20px; }
         h1 { color: #3b82f6; margin: 0; font-size: 24px; }
-        .grid-container { display: grid; grid-template-columns: 1s; gap: 20px; }
+        .grid-container { display: grid; grid-template-columns: 1fr; gap: 20px; }
         @media(min-width: 768px) { .grid-container { grid-template-columns: 1fr 2fr; } }
         .panel { background-color: #1f2937; padding: 20px; border-radius: 8px; border: 1px solid #374151; }
         .btn { width: 100%; padding: 12px; margin-top: 10px; border: none; border-radius: 6px; font-weight: bold; color: white; cursor: not-allowed; opacity: 0.5; }
@@ -19,7 +19,7 @@
         .btn-emerald { background-color: #059669; }
         .btn-purple { background-color: #7c3aed; }
         .active { opacity: 1 !important; cursor: pointer !important; }
-        .console { background-color: #000; border: 1px solid #374151; padding: 15px; border-radius: 6px; font-family: monospace; color: #34d399; hieght: 120px; overflow-y: auto; }
+        .console { background-color: #000; border: 1px solid #374151; padding: 15px; border-radius: 6px; font-family: monospace; color: #34d399; height: 120px; overflow-y: auto; }
         .chart-box { background-color: #111827; border: 1px solid #374151; padding: 10px; border-radius: 6px; height: 260px; }
     </style>
 </head>
@@ -34,7 +34,7 @@
         <!-- Izquierda -->
         <div class="panel">
             <h3>📂 Cargar Datos Físicos</h3>
-            <p style="font-size:13px; color:#9ca3af;">Sube tu archivo .xlsx del iPhone (Tiempo vs Voltaje)</p>
+            <p style="font-size:13px; color:#9ca3af;">Sube tu archivo .xlsx de la celda (Tiempo vs Voltaje)</p>
             <input type="file" id="excel-file" accept=".xlsx, .xls" style="margin-top:10px; color:#f3f4f6;" />
             <p style="font-size:12px; margin-top:10px;">Filas procesadas: <span id="row-count" style="color:#34d399; font-weight:bold;">0</span></p>
 
@@ -72,23 +72,35 @@
                 try {
                     const data = new Uint8Array(e.target.result);
                     const workbook = XLSX.read(data, {type: 'array'});
-                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
                     const json = XLSX.utils.sheet_to_json(worksheet, {header: 1});
                     
-                    datosX = []; datosY = [];
+                    datosX = []; 
+                    datosY = [];
+                    
+                    // Validar si la primera fila contiene texto para saltarla
                     const inicioFila = isNaN(Number(json[0][0])) ? 1 : 0;
 
                     for (let i = inicioFila; i < json.length; i++) {
                         if (json[i] && json[i][0] !== undefined && json[i][1] !== undefined) {
-                            datosX.push(Number(json[i][0]));
-                            datosY.push(Number(json[i][1]));
+                            if(json[i][0] !== "" && json[i][1] !== "") {
+                                datosX.push(Number(json[i][0]));
+                                datosY.push(Number(json[i][1]));
+                            }
                         }
+                    }
+
+                    if(datosX.length === 0) {
+                        alert("No se encontraron datos numéricos válidos en las columnas.");
+                        return;
                     }
 
                     document.getElementById('row-count').innerText = datosX.length;
                     
                     const consola = document.getElementById('console-output');
-                    consola.innerHTML += `<p style="margin:3px 0;">> Archivo cargado: "${file.name}" con éxito.</p>`;
+                    consola.innerHTML += `<p style="margin:3px 0;">> Archivo cargado con éxito: "${file.name}"</p>`;
+                    consola.innerHTML += `<p style="margin:3px 0; color:#3b82f6;">> Se procesaron ${datosX.length} puntos de telemetría.</p>`;
 
                     document.querySelectorAll('.btn').forEach(btn => {
                         btn.disabled = false;
@@ -97,7 +109,7 @@
 
                     actualizarGrafico(datosX, datosY);
                 } catch(err) {
-                    alert("Error al leer el archivo Excel. Verifica las columnas.");
+                    alert("Error al leer el archivo Excel. Revisa el formato de las celdas.");
                 }
             };
             reader.readAsArrayBuffer(file);
@@ -111,15 +123,23 @@
                 data: {
                     labels: x,
                     datasets: [{
-                        label: 'Voltaje de Bateria (V)',
+                        label: 'Voltaje de Batería (V)',
                         data: y,
                         borderColor: '#3b82f6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
                         borderWidth: 2,
                         pointBackgroundColor: '#ef4444',
                         tension: 0.1
                     }]
                 },
-                options: { responsive: true, maintainAspectRatio: false }
+                options: { 
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: { grid: { color: '#374151' } },
+                        y: { grid: { color: '#374151' } }
+                    }
+                }
             });
         }
     </script>
