@@ -34,7 +34,7 @@
         <!-- Izquierda -->
         <div class="panel">
             <h3>📂 Cargar Datos Físicos</h3>
-            <p style="font-size:13px; color:#9ca3af;">Sube tu archivo .xlsx o .csv (Tiempo vs Voltaje)</p>
+            <p style="font-size:13px; color:#9ca3af;">Sube tu archivo (Tiempo vs Voltaje)</p>
             <input type="file" id="excel-file" style="margin-top:10px; color:#f3f4f6;" />
             <p style="font-size:12px; margin-top:10px;">Filas procesadas: <span id="row-count" style="color:#34d399; font-weight:bold;">0</span></p>
 
@@ -71,58 +71,43 @@
             reader.onload = function(evt) {
                 datosX = [];
                 datosY = [];
-                let procesadoCorrectamente = false;
 
-                // INTENTO 1: Leer como archivo Excel (.xlsx) estructurado
                 try {
                     const data = new Uint8Array(evt.target.result);
                     const workbook = XLSX.read(data, {type: 'array'});
                     const worksheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const datosJson = XLSX.utils.sheet_to_json(worksheet);
+                    
+                    // Obtener la matriz en crudo de filas y columnas sin procesar
+                    const filasMatriz = XLSX.utils.sheet_to_json(worksheet, {header: 1});
 
-                    if (datosJson.length > 0) {
-                        datosJson.forEach(fila => {
-                            const tiempoKey = Object.keys(fila).find(k => k.toUpperCase().trim() === 'TIEMPO');
-                            const voltajeKey = Object.keys(fila).find(k => k.toUpperCase().trim() === 'VOLTAJE');
+                    filasMatriz.forEach((fila, index) => {
+                        if (index === 0 || !fila || fila.length === 0) return; // Saltar cabecera o vacios
 
-                            if (tiempoKey && voltajeKey) {
-                                const valX = Number(fila[tiempoKey]);
-                                const valY = Number(fila[voltajeKey]);
-                                if (!isNaN(valX) && !isNaN(valY)) {
-                                    datosX.push(valX);
-                                    datosY.push(valY);
-                                }
+                        let celdaA = fila[0];
+                        let celdaB = fila[1];
+
+                        // Si todo se pego en una sola columna separado por comas (Ej: "300,4.21")
+                        if (celdaA && (celdaB === undefined || celdaB === null || celdaB === "")) {
+                            const partes = String(celdaA).split(/[,;\t]/);
+                            if (partes.length >= 2) {
+                                celdaA = partes[0];
+                                celdaB = partes[1];
                             }
-                        });
-                        if (datosX.length > 0) procesadoCorrectamente = true;
-                    }
-                } catch (e) { /* Error silencioso, pasa al intento 2 */ }
+                        }
 
-                // INTENTO 2: Si fallo el parser de Excel, procesar como texto plano (CSV puro)
-                if (!procesadoCorrectamente) {
-                    try {
-                        const decoder = new TextDecoder();
-                        const texto = decoder.decode(evt.target.result);
-                        const lineas = texto.split(/\r?\n/);
+                        const valX = Number(celdaA);
+                        const valY = Number(celdaB);
 
-                        lineas.forEach((linea, index) => {
-                            if (index === 0 || linea.trim() === "") return; // Saltar cabecera o vacios
-                            const columnas = linea.split(/[,;\t]/); // Detectar comas, punto y coma o tabs
-                            if (columnas.length >= 2) {
-                                const valX = Number(columnas[0].trim());
-                                const valY = Number(columnas[1].trim());
-                                if (!isNaN(valX) && !isNaN(valY)) {
-                                    datosX.push(valX);
-                                    datosY.push(valY);
-                                }
-                            }
-                        });
-                        if (datosX.length > 0) procesadoCorrectamente = true;
-                    } catch (errText) { /* Error de decodificacion */ }
-                }
+                        if (!isNaN(valX) && !isNaN(valY)) {
+                            datosX.push(valX);
+                            datosY.push(valY);
+                        }
+                    });
 
-                // VALIDACIÓN FINAL DE LA CARGA
-                if (procesadoCorrectamente && datosX.length > 0) {
+                } catch (errExcel) { console.log(errExcel); }
+
+                // VALIDACIÓN Y RENDERIZADO
+                if (datosX.length > 0) {
                     document.getElementById('row-count').innerText = datosX.length;
                     const consola = document.getElementById('console-output');
                     consola.innerHTML += `<p style="margin:3px 0;">> Archivo cargado con éxito: "${file.name}"</p>`;
@@ -135,7 +120,7 @@
 
                     actualizarGrafico(datosX, datosY);
                 } else {
-                    alert("Error: No se lograron mapear las columnas. Asegúrate de que las cabeceras se llamen exactamente 'TIEMPO' y 'VOLTAJE'.");
+                    alert("Error: Comprueba que la primera fila del Excel tenga títulos (TIEMPO y VOLTAJE) y las siguientes filas sean los números.");
                 }
             };
             reader.readAsArrayBuffer(file);
