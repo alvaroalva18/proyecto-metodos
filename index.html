@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Calculadora de Metodos Numericos</title>
-    <!-- Librerias Graficas Estables -->
+    <!-- Librerias Matematicas y Graficas Estables -->
+    <script src="https://cloudflare.com"></script>
     <script src="https://jsdelivr.net"></script>
     <style>
         body { background-color: #111827; color: #f3f4f6; font-family: sans-serif; margin: 0; padding: 20px; }
@@ -33,7 +34,7 @@
         <!-- Izquierda -->
         <div class="panel">
             <h3>📂 Cargar Datos Físicos</h3>
-            <p style="font-size:13px; color:#9ca3af;">Sube tu archivo de datos (Tiempo vs Voltaje)</p>
+            <p style="font-size:13px; color:#9ca3af;">Sube tu archivo .xlsx o .csv (Tiempo vs Voltaje)</p>
             <input type="file" id="excel-file" style="margin-top:10px; color:#f3f4f6;" />
             <p style="font-size:12px; margin-top:10px;">Filas procesadas: <span id="row-count" style="color:#34d399; font-weight:bold;">0</span></p>
 
@@ -72,31 +73,47 @@
                 datosY = [];
 
                 try {
-                    const texto = evt.target.result;
-                    const lineas = texto.split(/\r?\n/);
+                    const data = new Uint8Array(evt.target.result);
+                    const workbook = XLSX.read(data, {type: 'array'});
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    
+                    // Extraer los datos como matriz bidimensional pura (Fila x Columna)
+                    const filasMatriz = XLSX.utils.sheet_to_json(worksheet, {header: 1});
 
-                    lineas.forEach((linea, index) => {
-                        let textoLimpio = linea.trim();
-                        if (index === 0 || textoLimpio === "") return; // Saltar cabecera o lineas vacias
+                    filasMatriz.forEach((fila, index) => {
+                        if (!fila || fila.length === 0) return;
 
-                        // Separar las columnas por coma, punto y coma o tabulación
-                        const columnas = textoLimpio.split(/[,;\t]/);
-                        
-                        if (columnas.length >= 2) {
-                            const valX = parseFloat(columnas[0].trim());
-                            const valY = parseFloat(columnas[1].trim());
+                        let colA = fila[0];
+                        let colB = fila[1];
 
-                            if (!isNaN(valX) && !isNaN(valY)) {
-                                datosX.push(valX);
-                                datosY.push(valY);
+                        // CASO ESPECIAL: Si los títulos o los datos se metieron todos en la columna A usando comas (Ej: "300,4.21")
+                        if (colA !== undefined && (colB === undefined || colB === null || colB === "")) {
+                            const partes = String(colA).split(/[,;\t]/);
+                            if (partes.length >= 2) {
+                                colA = partes[0];
+                                colB = partes[1];
                             }
                         }
+
+                        // Ignorar la primera fila si contiene las palabras de cabecera (TIEMPO, VOLTAJE)
+                        if (String(colA).toUpperCase().includes("TIEM") || String(colB).toUpperCase().includes("VOLT")) {
+                            return;
+                        }
+
+                        const valX = parseFloat(String(colA).trim());
+                        const valY = parseFloat(String(colB).trim());
+
+                        if (!isNaN(valX) && !isNaN(valY)) {
+                            datosX.push(valX);
+                            datosY.push(valY);
+                        }
                     });
-                } catch (err) {
-                    console.error(err);
+
+                } catch (errExcel) {
+                    console.error("Error al procesar binario:", errExcel);
                 }
 
-                // VALIDACIÓN Y RENDERIZADO
+                // RENDERING Y ACTUALIZACIÓN DE LA INTERFAZ
                 if (datosX.length > 0) {
                     document.getElementById('row-count').innerText = datosX.length;
                     const consola = document.getElementById('console-output');
@@ -110,11 +127,11 @@
 
                     actualizarGrafico(datosX, datosY);
                 } else {
-                    alert("Error al mapear las columnas. Asegúrate de que el archivo tenga datos numéricos válidos en sus filas.");
+                    alert("Error: No se pudieron leer números válidos. Comprueba que las columnas contengan los datos numéricos de tu experimento.");
                 }
             };
-            // Leer el archivo directamente como texto plano para evitar errores de librerías complejas
-            reader.readAsText(file);
+            // Leer como ArrayBuffer garantiza que decodifique el archivo XLSX binario de Microsoft Excel
+            reader.readAsArrayBuffer(file);
         });
 
         function actualizarGrafico(x, y) {
